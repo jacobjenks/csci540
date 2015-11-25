@@ -5,22 +5,13 @@ from PIL import Image
 from matplotlib import cm
 
 img = Image.open("test.jpg")
-
-#rgb = num.array(img.convert(mode="RGB", palette=Image.ADAPTIVE, colors=256))
 rgb = list(img.getdata())
-
-print len(rgb)
-print img.size
 rows = img.size[1]
 cols = img.size[0]
 
-hue = []
-saturation = []
-value = []
+hue, saturation, value = [], [], []
 for row in range(0,rows):
-    hue_row = []
-    saturation_row = []
-    value_row = []
+    hue_row, saturation_row, value_row = [], [], []
     for col in range(0, cols):
         rgb_floats = map(lambda x: float(x) / 255, rgb[cols * row + col])
         hsv_tuple = colorsys.rgb_to_hsv(*rgb_floats)
@@ -31,24 +22,15 @@ for row in range(0,rows):
     saturation.append(saturation_row)
     value.append(value_row)
 
-#process
+#autoencode here
 
 rgb_processed = []
 for row in range(0,rows):
     for col in range(0, cols):
-        h = hue[row][col]
-        s = saturation[row][col]
-        v= value[row][col]
-        rgb_ints = tuple(map(lambda x: int(x * 255), colorsys.hsv_to_rgb(h, s,v)))
+        h, s, v = tuple(map(lambda y: y[row][col], (hue, saturation, value)))
+        rgb_ints = tuple(map(lambda x: int(x*255), colorsys.hsv_to_rgb(h, s,v)))
         rgb_processed.append(rgb_ints)
 
 img_out = Image.new(img.mode, img.size)
 img_out.putdata(rgb_processed)
-
 img_out.save("out.bmp")
-
-
-#list_of_pixels = list(im.getdata())
-# Do something to the pixels...
-#im2 = Image.new(im.mode, im.size)
-#im2.putdata(list_of_pixels)
