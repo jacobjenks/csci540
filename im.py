@@ -1,23 +1,54 @@
+import colorsys
 import numpy as num
+import scipy
 from PIL import Image
 from matplotlib import cm
 
 img = Image.open("test.jpg")
 
-#quantization = num.array(img.convert('P', palette=Image.ADAPTIVE, colors=256))
+#rgb = num.array(img.convert(mode="RGB", palette=Image.ADAPTIVE, colors=256))
+rgb = list(img.getdata())
 
-max = num.amax(quantization)
-min = num.amin(quantization)
-range = max - min 
+print len(rgb)
+print img.size
+rows = img.size[1]
+cols = img.size[0]
 
-normalized = []
-for row in quantization:
-    newrow = []
-    for val in row:
-        newrow.append((val - min) / float(range))
-    normalized.append(newrow)
+hue = []
+saturation = []
+value = []
+for row in range(0,rows):
+    hue_row = []
+    saturation_row = []
+    value_row = []
+    for col in range(0, cols):
+        rgb_floats = map(lambda x: float(x) / 255, rgb[cols * row + col])
+        hsv_tuple = colorsys.rgb_to_hsv(*rgb_floats)
+        hue_row.append(hsv_tuple[0])
+        saturation_row.append(hsv_tuple[1])
+        value_row.append(hsv_tuple[2])
+    hue.append(hue_row)
+    saturation.append(saturation_row)
+    value.append(value_row)
 
-#new = Image.fromarray(a)
-new = Image.fromarray(num.uint8(cm.rainbow(normalized)*255))
+#process
 
-new.save("out.bmp")
+rgb_processed = []
+for row in range(0,rows):
+    for col in range(0, cols):
+        h = hue[row][col]
+        s = saturation[row][col]
+        v= value[row][col]
+        rgb_ints = tuple(map(lambda x: int(x * 255), colorsys.hsv_to_rgb(h, s,v)))
+        rgb_processed.append(rgb_ints)
+
+img_out = Image.new(img.mode, img.size)
+img_out.putdata(rgb_processed)
+
+img_out.save("out.bmp")
+
+
+#list_of_pixels = list(im.getdata())
+# Do something to the pixels...
+#im2 = Image.new(im.mode, im.size)
+#im2.putdata(list_of_pixels)
