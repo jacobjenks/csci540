@@ -20,26 +20,50 @@ class hsvImage:
 	def __init__(self, fileName):
 		self.fileName = fileName
 		
-		img = Image.open(self.fileName)
-		rgb = list(img.getdata())
-		rows = img.size[1]
-		cols = img.size[0]
+		self.__img = Image.open(self.fileName)
+		rgb = list(self.__img.getdata())
+		self.__rows = self.__img.size[1]
+		self.__cols = self.__img.size[0]
 		
 		self.hue, self.saturation, self.value = [], [], []
-		for row in range(0,rows):
+		for row in range(0,self.__rows):
 			hue_row, saturation_row, value_row = [], [], []
-			for col in range(0, cols):
-				rgb_floats = map(lambda x: float(x) / 255, rgb[cols * row + col])
+			for col in range(0, self.__cols):
+				rgb_floats = map(lambda x: float(x) / 255, rgb[self.__cols * row + col])
 				hsv_tuple = colorsys.rgb_to_hsv(*rgb_floats)
-				self.hue.append(hsv_tuple[0])
-				self.saturation.append(hsv_tuple[1])
-				self.value.append(hsv_tuple[2])
-				#hue_row.append(hsv_tuple[0])
-				#saturation_row.append(hsv_tuple[1])
-				#value_row.append(hsv_tuple[2])
-			#self.hue.append(hue_row)
-			#self.saturation.append(saturation_row)
-			#self.value.append(value_row)
+				hue_row.append(hsv_tuple[0])
+				saturation_row.append(hsv_tuple[1])
+				value_row.append(hsv_tuple[2])
+			self.hue = self.hue + hue_row
+			self.saturation = self.saturation + saturation_row
+			self.value = self.value + value_row
+			
+	def output_image(self, output_file):
+		rgb_processed = []
+		for row in range(0,self.__rows):
+			for col in range(0, self.__cols):
+				h, s, v = tuple(map(lambda y: y[row][col], (self.hue, self.saturation, self.value)))
+				rgb_ints = tuple(map(lambda x: int(x*255), colorsys.hsv_to_rgb(h, s,v)))
+				rgb_processed.append(rgb_ints)
+		
+		img_out = Image.new(self.__img.mode, self.__img.size)
+		img_out.putdata(rgb_processed)
+		img_out.save(output_file)
+		
+	def output_h(self, output_file):
+		img_out = Image.new('L', self.__img.size)
+		img_out.putdata([255 * v for v in self.hue])
+		img_out.save(output_file)
+		
+	def output_s(self, output_file):
+		img_out = Image.new('L', self.__img.size)
+		img_out.putdata([255 * v for v in self.saturation])
+		img_out.save(output_file)
+	
+	def output_v(self, output_file):
+		img_out = Image.new('L', self.__img.size)
+		img_out.putdata([255 * v for v in self.value])
+		img_out.save(output_file)
 			
 # This combines a series of images into H, S, and V array of arrays
 class ImageArray:
@@ -91,6 +115,13 @@ def head(array):
 		print array[i]
 
 if __name__ == '__main__':
-	data = ImageArray("images/pickle_test_100x100")
-	data = buildData(data.hue)
+	#data = ImageArray("images/pickle_test_100x100")
+	#data = buildData(data.hue)
 	#print data[0]
+	
+	template = Image.open("images/pickle_test_100x100/screenshot_2015-07-21 16.33.24.jpg")
+	template.output_s("images/pickle_test_100x100/test.jpg")
+	#for i in range(0,50000):
+	#	out = Image.new(template.mode, template.size)
+	#	out.putdata(template.getdata())
+	#	out.save("images/megatest/"+str(i)+".jpg")

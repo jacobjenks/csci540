@@ -278,7 +278,7 @@ def test_dA(learning_rate=0.1, training_epochs=15,
 
 	"""
 	image_size = 100
-	compression = .5
+	compression = .40
 	
 	#datasets = load_data(dataset)
 	data = DataBuilder.ImageArray("images/pickle_test_100x100")

@@ -31,17 +31,17 @@ class hsvImage:
 			self.saturation.append(saturation_row)
 			self.value.append(value_row)
 
-        def output_image(self, output_file):
-            rgb_processed = []
-            for row in range(0,self.__rows):
-                for col in range(0, self.__cols):
-                    h, s, v = tuple(map(lambda y: y[row][col], (self.hue, self.saturation, self.value)))
-                    rgb_ints = tuple(map(lambda x: int(x*255), colorsys.hsv_to_rgb(h, s,v)))
-                    rgb_processed.append(rgb_ints)
-            
-            img_out = Image.new(self.__img.mode, self.__img.size)
-            img_out.putdata(rgb_processed)
-            img_out.save(output_file)
+	def output_image(self, output_file):
+		rgb_processed = []
+		for row in range(0,self.__rows):
+			for col in range(0, self.__cols):
+				h, s, v = tuple(map(lambda y: y[row][col], (self.hue, self.saturation, self.value)))
+				rgb_ints = tuple(map(lambda x: int(x*255), colorsys.hsv_to_rgb(h, s,v)))
+				rgb_processed.append(rgb_ints)
+		
+		img_out = Image.new(self.__img.mode, self.__img.size)
+		img_out.putdata(rgb_processed)
+		img_out.save(output_file)
 		            
 	
 def buildPickle(dir):
@@ -55,5 +55,5 @@ def buildPickle(dir):
 	value_pickle = []
 
 if __name__ == '__main__':
-    test = hsvImage("test.jpg")
-    test.output_image("test_out.bmp")
+	test = hsvImage("test.jpg")
+	test.output_image("test_out.bmp")
