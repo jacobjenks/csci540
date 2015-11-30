@@ -277,16 +277,19 @@ def test_dA(learning_rate=0.1, training_epochs=15,
 	:param dataset: path to the picked dataset
 
 	"""
-	image_size = 28
-	compression = .4
+	image_size = 100
+	compression = .5
 	
-	datasets = load_data(dataset)
-	#data = DataBuilder.ImageArray("images/pickle_test_100x100")
-	#datasets = DataBuilder.buildData(data.hue)
+	#datasets = load_data(dataset)
+	data = DataBuilder.ImageArray("images/pickle_test_100x100")
+	datasets = DataBuilder.buildData(data.hue)
 	train_set_x, train_set_y = datasets[0]
 
 	# compute number of minibatches for training, validation and testing
 	n_train_batches = train_set_x.get_value(borrow=True).shape[0] / batch_size
+	n_train_batches = n_train_batches if n_train_batches > 0  else 1
+	
+	print "Minibatches: %d" %  n_train_batches
 
 	# start-snippet-2
 	# allocate symbolic variables for the data
@@ -309,8 +312,8 @@ def test_dA(learning_rate=0.1, training_epochs=15,
 	    numpy_rng=rng,
 	    theano_rng=theano_rng,
 	    input=x,
-	    n_visible=28 * 28,
-	    n_hidden=500
+	    n_visible= image_size * image_size,
+	    n_hidden= image_size * compression
 	)
 
 	cost, updates = da.get_cost_updates(

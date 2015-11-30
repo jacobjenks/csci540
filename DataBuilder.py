@@ -61,11 +61,9 @@ class ImageArray:
 #take a one dimensional array and return an rval that the autoencoder can use. This replaces load_data in logistic_sgd
 def buildData(data):
 	data = numpy.array(data, dtype=theano.config.floatX)
-	data = (data, numpy.zeros(len(data)))
-	#print data
 	
 	shared_x = theano.shared(data, borrow=True)#convert to theano.shared for GPU processing?
-	shared_y = theano.shared(data, borrow=True)
+	shared_y = theano.shared(numpy.zeros(len(data)), borrow=True)
 	shared_y = T.cast(shared_y, 'int32')#cast labels to ints, since float labels don't make sense
 	
 	# set of tuples for test_set_x, test_set_y, valid_set_x, valid_set_y, train_set_x, and train_set_y, but since this is an autoencoder these are all the same thing
@@ -95,4 +93,4 @@ def head(array):
 if __name__ == '__main__':
 	data = ImageArray("images/pickle_test_100x100")
 	data = buildData(data.hue)
-	print data
+	#print data[0]
