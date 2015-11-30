@@ -63,7 +63,7 @@ def buildData(data):
 	data = numpy.array(data, dtype=theano.config.floatX)
 	
 	shared_x = theano.shared(data, borrow=True)#convert to theano.shared for GPU processing?
-	shared_y = theano.shared(numpy.zeros(len(data)), borrow=True)
+	shared_y = theano.shared(numpy.zeros(len(data)), borrow=True)#Create array of empty labels
 	shared_y = T.cast(shared_y, 'int32')#cast labels to ints, since float labels don't make sense
 	
 	# set of tuples for test_set_x, test_set_y, valid_set_x, valid_set_y, train_set_x, and train_set_y, but since this is an autoencoder these are all the same thing

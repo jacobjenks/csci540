@@ -313,7 +313,7 @@ def test_dA(learning_rate=0.1, training_epochs=15,
 	    theano_rng=theano_rng,
 	    input=x,
 	    n_visible= image_size * image_size,
-	    n_hidden= image_size * compression
+	    n_hidden= image_size * image_size * compression
 	)
 
 	cost, updates = da.get_cost_updates(
@@ -371,7 +371,7 @@ def test_dA(learning_rate=0.1, training_epochs=15,
 	    theano_rng=theano_rng,
 	    input=x,
 	    n_visible=image_size*image_size,
-	    n_hidden=image_size*compression
+	    n_hidden=image_size * image_size * compression
 	)
 
 	cost, updates = da.get_cost_updates(
