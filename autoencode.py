@@ -33,6 +33,7 @@
 import os
 import sys
 import timeit
+import colorsys
 
 import numpy
 
@@ -43,6 +44,7 @@ from theano.tensor.shared_randomstreams import RandomStreams
 from logistic_sgd import load_data
 from utils import tile_raster_images
 import DataBuilder
+import math
 
 try:
 	import PIL.Image as Image
@@ -260,8 +262,8 @@ class dA(object):
 
 
 def test_dA(learning_rate=0.1, training_epochs=15,
-	        dataset='mnist.pkl.gz',
-	        batch_size=20, output_folder='dA_plots'):
+	        datasets=[],
+	        batch_size=20, output_folder='dA_plots', image_size=100, compression=.66, corruption=0.0):
 
 	"""
 	This demo is tested on MNIST
@@ -277,12 +279,8 @@ def test_dA(learning_rate=0.1, training_epochs=15,
 	:param dataset: path to the picked dataset
 
 	"""
-	image_size = 100
-	compression = .40
 	
 	#datasets = load_data(dataset)
-	data = DataBuilder.ImageArray("images/pickle_test_100x100")
-	datasets = DataBuilder.buildData(data.hue)
 	train_set_x, train_set_y = datasets[0]
 
 	# compute number of minibatches for training, validation and testing
@@ -304,7 +302,7 @@ def test_dA(learning_rate=0.1, training_epochs=15,
 	####################################
 	# BUILDING THE MODEL NO CORRUPTION #
 	####################################
-
+	
 	rng = numpy.random.RandomState(123)
 	theano_rng = RandomStreams(rng.randint(2 ** 30))
 
@@ -317,7 +315,7 @@ def test_dA(learning_rate=0.1, training_epochs=15,
 	)
 
 	cost, updates = da.get_cost_updates(
-	    corruption_level=0.,
+	    corruption_level=corruption,
 	    learning_rate=learning_rate
 	)
 
@@ -356,72 +354,57 @@ def test_dA(learning_rate=0.1, training_epochs=15,
 	    tile_raster_images(X=da.W.get_value(borrow=True).T,
 	                       img_shape=(image_size, image_size), tile_shape=(10, 10),
 	                       tile_spacing=(1, 1)))
-	image.save('filters_corruption_0.png')
-
-	# start-snippet-3
-	#####################################
-	# BUILDING THE MODEL CORRUPTION 30% #
-	#####################################
-
-	rng = numpy.random.RandomState(123)
-	theano_rng = RandomStreams(rng.randint(2 ** 30))
-
-	da = dA(
-	    numpy_rng=rng,
-	    theano_rng=theano_rng,
-	    input=x,
-	    n_visible=image_size*image_size,
-	    n_hidden=image_size * image_size * compression
-	)
-
-	cost, updates = da.get_cost_updates(
-	    corruption_level=0.3,
-	    learning_rate=learning_rate
-	)
-
-	train_da = theano.function(
-	    [index],
-	    cost,
-	    updates=updates,
-	    givens={
-	        x: train_set_x[index * batch_size: (index + 1) * batch_size]
-	    }
-	)
-
-	start_time = timeit.default_timer()
-
-	############
-	# TRAINING #
-	############
-
-	# go through training epochs
-	for epoch in xrange(training_epochs):
-	    # go through trainng set
-	    c = []
-	    for batch_index in xrange(n_train_batches):
-	        c.append(train_da(batch_index))
-
-	    print 'Training epoch %d, cost ' % epoch, numpy.mean(c)
-
-	end_time = timeit.default_timer()
-
-	training_time = (end_time - start_time)
-
-	print >> sys.stderr, ('The 30% corruption code for file ' +
-	                      os.path.split(__file__)[1] +
-	                      ' ran for %.2fm' % (training_time / 60.))
-	# end-snippet-3
-
-	# start-snippet-4
-	image = Image.fromarray(tile_raster_images(
-	    X=da.W.get_value(borrow=True).T,
-	    img_shape=(image_size, image_size), tile_shape=(10, 10),
-	    tile_spacing=(1, 1)))
-	image.save('filters_corruption_30.png')
-	# end-snippet-4
-
+	image.save('filters_corruption_%d.png' % corruption)
+	
 	os.chdir('../')
+	#return reconstructed images
+	return da.get_reconstructed_input(da.get_hidden_values(train_set_x)).eval()
 
 
 if __name__ == '__main__':
-	test_dA()
+	directory = "images/pickle_test_100x100"
+	image_size = 100
+	compression = .99
+	epochs = 100
+	corruption = 0
+	
+	data = DataBuilder.ImageArray(directory)
+	hue = test_dA(datasets = DataBuilder.buildData(data.hue), training_epochs=epochs, image_size=image_size, compression=compression, corruption=corruption)
+	saturation = test_dA(datasets = DataBuilder.buildData(data.saturation), training_epochs=epochs, image_size=image_size, compression=compression, corruption=corruption)
+	value = test_dA(datasets = DataBuilder.buildData(data.value), training_epochs=epochs, image_size=image_size, compression=compression, corruption=corruption)
+	
+	
+	i = 0
+	for image in hue:
+		img_out = Image.new("L", (image_size, image_size))
+		img_out.putdata([int(255 * p) for p in image])
+		img_out.save("results/hue_%d.png" % i)
+		i = i + 1
+	
+	i = 0
+	for image in saturation:
+		img_out = Image.new("L", (image_size, image_size))
+		img_out.putdata([int(255 * p) for p in image])
+		img_out.save("results/saturation_%d.png" % i)
+		i = i + 1
+	
+	i = 0
+	for image in value:
+		img_out = Image.new("L", (image_size, image_size))
+		img_out.putdata([int(255 * p) for p in image])
+		img_out.save("results/value_%d.png" % i)
+		i = i + 1
+	
+	
+	for i in range(0, len(hue)):
+		rgb_processed = []
+		for row in range(0,image_size):
+			for col in range(0, image_size):
+				h, s, v = tuple(map(lambda y: y[(row * image_size) + col], (hue[i], saturation[i], value[i])))
+				rgb_ints = tuple(map(lambda x: int(x*255), colorsys.hsv_to_rgb(h, s,v)))
+				rgb_processed.append(rgb_ints)
+		
+		img_out = Image.new("RGB", (image_size, image_size))
+		img_out.putdata(rgb_processed)
+		img_out.save("results/color_%d.png" % i)
+		

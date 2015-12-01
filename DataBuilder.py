@@ -70,11 +70,18 @@ class ImageArray:
 	hue = []
 	saturation = []
 	value = []
+	max_images = 500
 	
 	def __init__(self, directory):
+		print "Building image array"
 		imageFiles = listdir(directory)
 		imagesToProcess = []
+		i = 0
 		for f in imageFiles:
+			if i > self.max_images:
+				break;
+			else:
+				i = i + 1
 			imagesToProcess.append(hsvImage(directory+"/"+f))
 
 		for image in imagesToProcess:
